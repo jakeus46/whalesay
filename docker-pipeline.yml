@@ -1,0 +1,36 @@
+name: Docker Pipeline
+
+on:
+  push:
+    branches:
+      - main # Запуск на каждом push в ветку main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to DockerHub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          if [ -f Dockerfile ]; then
+            docker build -t whalesay-image .
+          else
+            echo "Dockerfile not found!"
+            exit 1
+          fi
+
+      - name: Run Docker Container
+        run: |
+          docker run --rm whalesay-image cowsay "Hello from GitHub Actions!"
